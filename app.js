@@ -80,7 +80,7 @@ function formatTimestamp(date) {
 function autoRunCountPosts(userName) {
     console.log("Auto-run started. Press Ctrl+C to stop.");
     setInterval(() => {
-        console.log("\n--- Auto Update Mode ---");
+        console.log("\n--- Auto Update ---");
         countPosts(userName);
     }, 3000);
 }
@@ -88,10 +88,10 @@ function autoRunCountPosts(userName) {
 const userName = 'Jeremy Barton'; // Your name here
 
 // Uncomment the line below to run automatically every 3 seconds
-// autoRunCountPosts(userName);
+autoRunCountPosts(userName);
 
 // Comment out the line below if using auto-run
-countPosts(userName);
+// countPosts(userName);
 
 console.log(`Scroll up and run again to find more posts.`);
 // Reminder
