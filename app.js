@@ -26,7 +26,7 @@ function countPosts(userName) {
             }
         }
     });
-    console.log(`${userName} has posted ${count} times since Monday, ${monday.toLocaleDateString()} at 12:00 AM.`);
+    console.log(`${count} posts found by ${userName} since Monday, ${monday.toLocaleDateString()} at 12:00 AM.`);
     // Print the timestamps
     if (timestamps.length > 0) {
         timestamps.sort((a, b) => b - a); // Sort in descending order
@@ -34,7 +34,8 @@ function countPosts(userName) {
             console.log(`${index + 1}: ${formatTimestamp(timestamp)}`);
         });
     } else {
-        console.log(`No posts found for ${userName} since Monday.`);
+        console.log(`(Nothing found yet)`);
+      	console.log(`Scroll around to find more posts.`);
     }
 }
 
@@ -93,5 +94,5 @@ autoRunCountPosts(userName);
 // Comment out the line below if using auto-run
 // countPosts(userName);
 
-console.log(`Scroll up and run again to find more posts.`);
+console.log(`Scroll and run again to find more posts.`);
 // Reminder
