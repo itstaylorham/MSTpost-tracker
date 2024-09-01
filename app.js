@@ -1,3 +1,5 @@
+var userName = 'Jeremy Barton'; // Your name here, as it appears in Teams
+
 function countPosts(userName) {
     // Calculate Monday of the current week at 12:00 AM
     const now = new Date();
@@ -33,6 +35,8 @@ function countPosts(userName) {
         timestamps.forEach(function(timestamp, index) {
             console.log(`${index + 1}: ${formatTimestamp(timestamp)}`);
         });
+      	console.log(`Scroll around to find more posts.`);
+// Reminder
     } else {
         console.log(`(Nothing found yet)`);
       	console.log(`Scroll around to find more posts.`);
@@ -86,13 +90,8 @@ function autoRunCountPosts(userName) {
     }, 3000);
 }
 
-const userName = 'Jeremy Barton'; // Your name here
-
 // Uncomment the line below to run automatically every 3 seconds
-autoRunCountPosts(userName);
+ autoRunCountPosts(userName);
 
 // Comment out the line below if using auto-run
 // countPosts(userName);
-
-console.log(`Scroll and run again to find more posts.`);
-// Reminder
