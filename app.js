@@ -1,11 +1,10 @@
-// Function to count how many times a user's name appears and print the associated times
-function countUserAppearancesWithTimes(userName) {
+function countPosts(userName) {
     // Select all span elements with id starting with 'author-'
     const authorElements = document.querySelectorAll("span[id^='author-']");
     let count = 0;
     const times = [];
 
-    // Loop through each element and check if its text matches the user's name
+    // Check for tag within each div element
     authorElements.forEach(function(element) {
         if (element.textContent.trim() === userName) {
             count++;
@@ -19,12 +18,10 @@ function countUserAppearancesWithTimes(userName) {
         }
     });
 
-    // Print the count
-    console.log(`${userName} appears ${count} times on this page.`);
+    console.log(`${userName} posted ${count} times on this page.`);
 
-    // Print the associated times
+    // Print the times
     if (times.length > 0) {
-        console.log(`Times associated with ${userName}:`);
         times.forEach(function(time, index) {
             console.log(`${index + 1}: ${time}`);
         });
@@ -33,5 +30,8 @@ function countUserAppearancesWithTimes(userName) {
     }
 }
 
-userName = 'Jeremy Barton';
-countUserAppearancesWithTimes(userName);
+userName = 'Jeremy Barton'; // Your name here
+countPosts(userName);
+
+console.log(`Scroll up and run again to find more posts.`)
+// Reminder
