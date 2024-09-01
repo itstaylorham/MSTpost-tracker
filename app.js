@@ -1,5 +1,7 @@
 var userName = 'Jeremy Barton'; // Your name here, as it appears in Teams
 
+var postsMemory = []; // Array to store the found post timestamps
+
 function countPosts(userName) {
     // Calculate Monday of the current week at 12:00 AM
     const now = new Date();
@@ -11,6 +13,7 @@ function countPosts(userName) {
     const authorElements = document.querySelectorAll("span[id^='author-']");
     let count = 0;
     const timestamps = [];
+
     // Check for tag within each div element
     authorElements.forEach(function(element) {
         if (element.textContent.trim() === userName) {
@@ -22,24 +25,30 @@ function countPosts(userName) {
                 const postDate = parseRelativeTime(timeText, now);
                 
                 if (postDate && postDate >= monday) {
+                    // Check if the postDate is not already in memory
+                    if (!postsMemory.some(existingPost => existingPost.getTime() === postDate.getTime())) {
+                        postsMemory.push(postDate); // Store unique posts
+                    }
                     count++;
                     timestamps.push(postDate);
                 }
             }
         }
     });
-    console.log(`${count} posts found by ${userName} since Monday, ${monday.toLocaleDateString()} at 12:00 AM.`);
-    // Print the timestamps
-    if (timestamps.length > 0) {
-        timestamps.sort((a, b) => b - a); // Sort in descending order
-        timestamps.forEach(function(timestamp, index) {
+
+    // Output results
+    console.log(`${postsMemory.length} posts found by ${userName} since Monday, ${monday.toLocaleDateString()} at 12:00 AM.`);
+    // Combine new timestamps with previously stored timestamps
+    const allTimestamps = [...postsMemory, ...timestamps];
+    if (allTimestamps.length > 0) {
+        allTimestamps.sort((a, b) => b - a); // Sort in descending order
+        allTimestamps.forEach(function(timestamp, index) {
             console.log(`${index + 1}: ${formatTimestamp(timestamp)}`);
         });
-      	console.log(`Scroll around to find more posts.`);
-// Reminder
+        console.log(`Scroll around to find more posts.`);
     } else {
         console.log(`(Nothing found yet)`);
-      	console.log(`Scroll around to find more posts.`);
+        console.log(`Scroll around to find more posts.`);
     }
 }
 
@@ -91,7 +100,7 @@ function autoRunCountPosts(userName) {
 }
 
 // Uncomment the line below to run automatically every 3 seconds
- autoRunCountPosts(userName);
+autoRunCountPosts(userName);
 
 // Comment out the line below if using auto-run
 // countPosts(userName);
