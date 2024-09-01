@@ -8,7 +8,7 @@ function countPosts(userName) {
     // Select all span elements with id starting with 'author-'
     const authorElements = document.querySelectorAll("span[id^='author-']");
     let count = 0;
-    const times = [];
+    const timestamps = [];
     // Check for tag within each div element
     authorElements.forEach(function(element) {
         if (element.textContent.trim() === userName) {
@@ -21,16 +21,17 @@ function countPosts(userName) {
                 
                 if (postDate && postDate >= monday) {
                     count++;
-                    times.push(timeText);
+                    timestamps.push(postDate);
                 }
             }
         }
     });
     console.log(`${userName} has posted ${count} times since Monday, ${monday.toLocaleDateString()} at 12:00 AM.`);
-    // Print the times
-    if (times.length > 0) {
-        times.forEach(function(time, index) {
-            console.log(`${index + 1}: ${time}`);
+    // Print the timestamps
+    if (timestamps.length > 0) {
+        timestamps.sort((a, b) => b - a); // Sort in descending order
+        timestamps.forEach(function(timestamp, index) {
+            console.log(`${index + 1}: ${formatTimestamp(timestamp)}`);
         });
     } else {
         console.log(`No posts found for ${userName} since Monday.`);
@@ -42,40 +43,55 @@ function parseRelativeTime(timeText, now) {
     const date = new Date(now);
     const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
- // Specify how to handle 'Yesterday'
     if (timeText.includes('Yesterday')) {
         date.setDate(date.getDate() - 1);
-        const [hours, minutes] = parts[1].split(':');
-        date.setHours(parseInt(hours), parseInt(minutes), 0, 0);
     } else if (daysOfWeek.includes(parts[0])) {
         const dayIndex = daysOfWeek.indexOf(parts[0]);
         const currentDay = date.getDay();
         let daysToSubtract = currentDay - dayIndex;
-        if (daysToSubtract < 0) daysToSubtract += 7;  // Wrap around to previous week
+        if (daysToSubtract <= 0) daysToSubtract += 7;
         date.setDate(date.getDate() - daysToSubtract);
-        const [time, period] = parts[1].split(' ');
-        let [hours, minutes] = time.split(':');
-        hours = parseInt(hours);
-        if (period === 'PM' && hours !== 12) hours += 12;
-        if (period === 'AM' && hours === 12) hours = 0;
-        date.setHours(hours, parseInt(minutes), 0, 0);
-    } else if (parts.length === 2 && (parts[1] === 'AM' || parts[1] === 'PM')) {
-        const [time, period] = parts;
-        let [hours, minutes] = time.split(':');
-        hours = parseInt(hours);
-        if (period === 'PM' && hours !== 12) hours += 12;
-        if (period === 'AM' && hours === 12) hours = 0;
-        date.setHours(hours, parseInt(minutes), 0, 0);
-    } else {
-        // For other formats, you may need to add more parsing logic
-        console.log(`Unrecognized time format: ${timeText}`);
-        return null;
     }
+
+    const timePart = parts[parts.length - 2] + ' ' + parts[parts.length - 1];
+    const [time, period] = timePart.split(' ');
+    let [hours, minutes] = time.split(':');
+    hours = parseInt(hours);
+    if (period === 'PM' && hours !== 12) hours += 12;
+    if (period === 'AM' && hours === 12) hours = 0;
+    date.setHours(hours, parseInt(minutes), 0, 0);
 
     return date;
 }
 
-userName = 'Jeremy Barton'; // Your name here
+function formatTimestamp(date) {
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const dayName = days[date.getDay()];
+    const hours = date.getHours().toString().padStart(2, '0');
+    const minutes = date.getMinutes().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const day = date.getDate().toString().padStart(2, '0');
+    const year = date.getFullYear();
+
+    return `${dayName}, ${month}/${day}/${year} ${hours}:${minutes}`;
+}
+
+// New function for automatic execution
+function autoRunCountPosts(userName) {
+    console.log("Auto-run started. Press Ctrl+C to stop.");
+    setInterval(() => {
+        console.log("\n--- Auto Update Mode ---");
+        countPosts(userName);
+    }, 3000);
+}
+
+const userName = 'Jeremy Barton'; // Your name here
+
+// Uncomment the line below to run automatically every 3 seconds
+// autoRunCountPosts(userName);
+
+// Comment out the line below if using auto-run
 countPosts(userName);
-console.log(`Scroll and run again to find more posts.`);
+
+console.log(`Scroll up and run again to find more posts.`);
 // Reminder
