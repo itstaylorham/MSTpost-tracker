@@ -1,50 +1,61 @@
 var userName = 'Jeremy Barton'; // Your name here, as it appears in Teams
 
-var postsMemory = []; // Array to store the found post timestamps
+var postsMemory = []; // Array to store posts with their replies
 
 function countPosts(userName) {
-    // Calculate Monday of the current week at 12:00 AM
     const now = new Date();
     const monday = new Date(now);
     monday.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1));
     monday.setHours(0, 0, 0, 0);
 
-    // Select all span elements with id starting with 'author-'
     const authorElements = document.querySelectorAll("span[id^='author-']");
-    let count = 0;
-    const timestamps = [];
+    let newPosts = 0;
+    let newReplies = 0;
 
-    // Check for tag within each div element
     authorElements.forEach(function(element) {
         if (element.textContent.trim() === userName) {
-            // Find the <time> element within the same <div> as the author <span>
             const timeElement = element.closest('div').querySelector('time');
             
             if (timeElement) {
                 const timeText = timeElement.textContent.trim();
                 const postDate = parseRelativeTime(timeText, now);
-                
+
                 if (postDate && postDate >= monday) {
-                    // Check if the postDate is not already in memory
-                    if (!postsMemory.some(existingPost => existingPost.getTime() === postDate.getTime())) {
-                        postsMemory.push(postDate); // Store unique posts
+                    let existingPost = postsMemory.find(post => post.timestamp.getTime() === postDate.getTime());
+
+                    if (!existingPost) {
+                        postsMemory.push({ timestamp: postDate, replies: [] });
+                        newPosts++;
+                    } else {
+                        existingPost.replies.push(postDate);
+                        newReplies++;
                     }
-                    count++;
-                    timestamps.push(postDate);
                 }
             }
         }
     });
 
     // Output results
-    console.log(`${postsMemory.length} posts found by ${userName} since Monday, ${monday.toLocaleDateString()} at 12:00 AM.`);
-    // Combine new timestamps with previously stored timestamps
-    const allTimestamps = [...postsMemory, ...timestamps];
-    if (allTimestamps.length > 0) {
+    const totalPosts = postsMemory.length;
+    const totalReplies = postsMemory.reduce((acc, post) => acc + post.replies.length, 0);
+    const totalPostsAndReplies = totalPosts + totalReplies;
+
+    console.log(`${totalPosts} post(s) and ${totalReplies} reply(s) found by ${userName} since Monday, ${monday.toLocaleDateString()} at 12:00 AM.`);
+    console.log(`Total posts and replies: ${totalPostsAndReplies}`);
+
+    if (totalPosts > 0) {
+        const allTimestamps = [];
+        postsMemory.forEach(post => {
+            allTimestamps.push(post.timestamp);
+            allTimestamps.push(...post.replies);
+        });
+
         allTimestamps.sort((a, b) => b - a); // Sort in descending order
+
         allTimestamps.forEach(function(timestamp, index) {
             console.log(`${index + 1}: ${formatTimestamp(timestamp)}`);
         });
+
         console.log(`Scroll around to find more posts.`);
     } else {
         console.log(`(Nothing found yet)`);
