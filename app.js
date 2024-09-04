@@ -22,7 +22,7 @@ function countPosts(userName) {
                 const replyText = messageBodyElement.textContent.trim();
                 const wordCount = replyText.split(/\s+/).length;
 
-                if (wordCount > 2) { // Only include replies with more than two words
+                if (wordCount >= 10) { // Only include replies with more than two words
                     const timeElement = element.closest('div').querySelector('time');
                     
                     if (timeElement) {
