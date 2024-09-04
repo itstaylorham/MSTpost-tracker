@@ -1,6 +1,7 @@
-var userName = 'Your Name'; // Your name here, as it appears in Teams
+var userName = 'Jeremy Barton'; // Your name here, as it appears in Teams
 
 var postsMemory = []; // Array to store posts with their replies
+var omittedRepliesCount = 0; // Counter for omitted replies
 
 function countPosts(userName) {
     const now = new Date();
@@ -14,22 +15,40 @@ function countPosts(userName) {
 
     authorElements.forEach(function(element) {
         if (element.textContent.trim() === userName) {
-            const timeElement = element.closest('div').querySelector('time');
+            const authorId = element.getAttribute('id').replace('author-', '');
+            const messageBodyElement = document.querySelector(`div[id="message-body-${authorId}"]`);
             
-            if (timeElement) {
-                const timeText = timeElement.textContent.trim();
-                const postDate = parseRelativeTime(timeText, now);
+            if (messageBodyElement) {
+                const replyText = messageBodyElement.textContent.trim();
+                const wordCount = replyText.split(/\s+/).length;
 
-                if (postDate && postDate >= monday) {
-                    let existingPost = postsMemory.find(post => post.timestamp.getTime() === postDate.getTime());
+                if (wordCount > 2) { // Only include replies with more than two words
+                    const timeElement = element.closest('div').querySelector('time');
+                    
+                    if (timeElement) {
+                        const timeText = timeElement.textContent.trim();
+                        const postDate = parseRelativeTime(timeText, now);
 
-                    if (!existingPost) {
-                        postsMemory.push({ timestamp: postDate, replies: [] });
-                        newPosts++;
-                    } else {
-                        existingPost.replies.push(postDate);
-                        newReplies++;
+                        if (postDate && postDate >= monday) {
+                            // Check if this post or reply has already been added
+                            let existingPost = postsMemory.find(post => post.authorId === authorId && post.timestamp.getTime() === postDate.getTime());
+
+                            if (!existingPost) {
+                                postsMemory.push({ timestamp: postDate, authorId: authorId, replies: [] });
+                                newPosts++;
+                            } else {
+                                // Check if this specific reply has already been added
+                                let existingReply = existingPost.replies.find(reply => reply.timestamp.getTime() === postDate.getTime());
+                                
+                                if (!existingReply) {
+                                    existingPost.replies.push({ timestamp: postDate, authorId: authorId });
+                                    newReplies++;
+                                }
+                            }
+                        }
                     }
+                } else {
+                    omittedRepliesCount++; // Count omitted short replies
                 }
             }
         }
@@ -42,12 +61,15 @@ function countPosts(userName) {
 
     console.log(`${totalPosts} post(s) and ${totalReplies} reply(s) found by ${userName} since Monday, ${monday.toLocaleDateString()} at 12:00 AM.`);
     console.log(`Total posts and replies: ${totalPostsAndReplies}`);
+    console.log(`Omitted short replies: ${omittedRepliesCount}`);
 
     if (totalPosts > 0) {
         const allTimestamps = [];
         postsMemory.forEach(post => {
             allTimestamps.push(post.timestamp);
-            allTimestamps.push(...post.replies);
+            post.replies.forEach(reply => {
+                allTimestamps.push(reply.timestamp);
+            });
         });
 
         allTimestamps.sort((a, b) => b - a); // Sort in descending order
