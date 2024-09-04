@@ -90,7 +90,7 @@ function formatTimestamp(date) {
     return `${dayName}, ${month}/${day}/${year} ${hours}:${minutes}`;
 }
 
-// New function for automatic execution
+// Auto run (default)
 function autoRunCountPosts(userName) {
     console.log("Auto-run started. Press Ctrl+C to stop.");
     setInterval(() => {
