@@ -1,4 +1,4 @@
-var userName = 'Jeremy Barton'; // Your name here, as it appears in Teams
+var userName = 'Your Name'; // Your name here, as it appears in Teams
 
 var postsMemory = []; // Array to store the found post timestamps
 
