@@ -2,6 +2,7 @@ var userName = 'Jeremy Barton'; // Your name here, as it appears in Teams
 
 var postsMemory = []; // Array to store posts with their replies
 var omittedRepliesCount = 0; // Counter for omitted replies
+var omittedRepliesTimestamps = new Set(); // Set to keep track of omitted reply timestamps
 
 function countPosts(userName) {
     const now = new Date();
@@ -22,14 +23,14 @@ function countPosts(userName) {
                 const replyText = messageBodyElement.textContent.trim();
                 const wordCount = replyText.split(/\s+/).length;
 
-                if (wordCount >= 10) { // Only include replies with more than two words
-                    const timeElement = element.closest('div').querySelector('time');
-                    
-                    if (timeElement) {
-                        const timeText = timeElement.textContent.trim();
-                        const postDate = parseRelativeTime(timeText, now);
+                const timeElement = element.closest('div').querySelector('time');
+                
+                if (timeElement) {
+                    const timeText = timeElement.textContent.trim();
+                    const postDate = parseRelativeTime(timeText, now);
 
-                        if (postDate && postDate >= monday) {
+                    if (postDate && postDate >= monday) {
+                        if (wordCount >= 10) { // Only include replies with more than two words
                             // Check if this post or reply has already been added
                             let existingPost = postsMemory.find(post => post.authorId === authorId && post.timestamp.getTime() === postDate.getTime());
 
@@ -45,10 +46,14 @@ function countPosts(userName) {
                                     newReplies++;
                                 }
                             }
+                        } else {
+                            // Check if this omitted reply has been counted before
+                            if (!omittedRepliesTimestamps.has(postDate.getTime())) {
+                                omittedRepliesCount++;
+                                omittedRepliesTimestamps.add(postDate.getTime()); // Add to omitted timestamps
+                            }
                         }
                     }
-                } else {
-                    omittedRepliesCount++; // Count omitted short replies
                 }
             }
         }
@@ -63,7 +68,6 @@ function countPosts(userName) {
     console.log(`${totalPostsAndReplies} post(s) or reply(s) found by ${userName} since Monday, ${monday.toLocaleDateString()} at 12:00 AM.`);
     console.log(`Total posts and replies: ${totalPostsAndReplies}`);
     console.log(`Omitted short replies: ${omittedRepliesCount}`);
-
 
     if (totalPosts > 0) {
         const allTimestamps = [];
