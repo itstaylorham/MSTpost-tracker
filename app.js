@@ -1,4 +1,4 @@
-var userName = 'Jeremy Barton'; // Your name here, as it appears in Teams
+var userName = 'Your Name'; // Your name here, as it appears in Teams
 
 var postsMemory = []; // Array to store posts with their replies
 
@@ -101,7 +101,7 @@ function formatTimestamp(date) {
     return `${dayName}, ${month}/${day}/${year} ${hours}:${minutes}`;
 }
 
-// New function for automatic execution
+// Auto run (default)
 function autoRunCountPosts(userName) {
     console.log("Auto-run started. Press Ctrl+C to stop.");
     setInterval(() => {
