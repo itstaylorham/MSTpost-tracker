@@ -142,4 +142,4 @@ function autoRunCountPosts(userName) {
 autoRunCountPosts(userName);
 
 // Comment out the line below if using auto-run
-// countPosts(userName);
+// countPosts(userName); 
