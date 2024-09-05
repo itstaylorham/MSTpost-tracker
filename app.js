@@ -66,7 +66,7 @@ function countPosts(userName) {
 
     // Update output to show combined total
     console.log(`${totalPostsAndReplies} post(s) or reply(s) found by ${userName} since Monday, ${monday.toLocaleDateString()} at 12:00 AM.`);
-    console.log(`Omitted replies: ${omittedRepliesCount}`);
+    console.log(`Omitted short replies: ${omittedRepliesCount}`);
 
     if (totalPosts > 0) {
         const allTimestamps = [];
