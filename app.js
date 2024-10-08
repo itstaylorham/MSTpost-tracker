@@ -1,22 +1,24 @@
-var userName = ['Jeremy Barton', 'Sherrell Bacon', 'Rebecca Foster-Alvarez','Mark Poisson','Rohit Patil','Heather Moore','Rhonda Rivas','Rajendra Prasad Poloju']; // Your name here, as it appears in Teams
+var userNames = ['Your Name']; // Array of usernames to track
 
 var postsMemory = []; // Array to store posts with their replies
 var omittedRepliesCount = 0; // Counter for omitted replies
 var omittedRepliesTimestamps = new Set(); // Set to keep track of omitted reply timestamps
-var allContentData = []; // Array to store content data for JSON export
 
-function countPosts(userName) {
+function countPosts(userNames) {
     const now = new Date();
     const monday = new Date(now);
-    monday.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1));
-    monday.setHours(0, 0, 0, 0);
+    monday.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1)); // Set to Monday
+    monday.setHours(0, 0, 0, 0); // Set Monday to 12:00 AM
 
     const authorElements = document.querySelectorAll("span[id^='author-']");
     let newPosts = 0;
     let newReplies = 0;
 
     authorElements.forEach(function(element) {
-        if (element.textContent.trim() === userName) {
+        const currentAuthorName = element.textContent.trim();
+
+        // Check if the current author's name is in the userNames array
+        if (userNames.includes(currentAuthorName)) {
             const authorId = element.getAttribute('id').replace('author-', '');
             const messageBodyElement = document.querySelector(`div[id="message-body-${authorId}"]`);
             
@@ -31,13 +33,12 @@ function countPosts(userName) {
                     const postDate = parseRelativeTime(timeText, now);
 
                     if (postDate && postDate >= monday) {
-                        if (wordCount >= 10) { // Only include replies with more than two words
+                        if (wordCount >= 10) { // Only include replies with more than 10 words
                             // Check if this post or reply has already been added
                             let existingPost = postsMemory.find(post => post.authorId === authorId && post.timestamp.getTime() === postDate.getTime());
 
                             if (!existingPost) {
                                 postsMemory.push({ timestamp: postDate, authorId: authorId, replies: [] });
-                                allContentData.push({ timestamp: postDate, authorId: authorId, content: replyText }); // Store content data
                                 newPosts++;
                             } else {
                                 // Check if this specific reply has already been added
@@ -45,7 +46,6 @@ function countPosts(userName) {
                                 
                                 if (!existingReply) {
                                     existingPost.replies.push({ timestamp: postDate, authorId: authorId });
-                                    allContentData.push({ timestamp: postDate, authorId: authorId, content: replyText }); // Store content data
                                     newReplies++;
                                 }
                             }
@@ -67,13 +67,13 @@ function countPosts(userName) {
     const totalReplies = postsMemory.reduce((acc, post) => acc + post.replies.length, 0);
     const totalPostsAndReplies = totalPosts + totalReplies;
 
-    // Update output to show combined total
-    console.log(`${totalPostsAndReplies} post(s) or reply(s) found by ${userName} since Monday, ${monday.toLocaleDateString()} at 12:00 AM.`);
+    // Update output to show combined total for all usernames
+    console.log(`${totalPostsAndReplies} post(s) or reply(s) found by users: ${userNames.join(", ")} since Monday, ${monday.toLocaleDateString()} at 12:00 AM.`);
     console.log(`Omitted short replies: ${omittedRepliesCount}`);
 
-    // If there is new content, trigger the JSON download
+    // Download the JSON data if there are new posts or replies
     if (newPosts > 0 || newReplies > 0) {
-        downloadContentAsJson(allContentData);
+        downloadContentAsJson(postsMemory);
     }
 
     if (totalPosts > 0) {
@@ -149,16 +149,16 @@ function formatTimestamp(date) {
 }
 
 // Auto run (default)
-function autoRunCountPosts(userName) {
+function autoRunCountPosts(userNames) {
     console.log("Auto-run started. Press Ctrl+C to stop.");
     setInterval(() => {
         console.log("\n--- Auto Update ---");
-        countPosts(userName);
+        countPosts(userNames);
     }, 3000);
 }
 
 // Uncomment the line below to run automatically every 3 seconds
-autoRunCountPosts(userName);
+autoRunCountPosts(userNames);
 
 // Comment out the line below if using auto-run
-// countPosts(userName);
+// countPosts(userNames);
