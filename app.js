@@ -1,4 +1,4 @@
-var userName = 'Your Name'; // Your name here, as it appears in Teams
+var userName = ['Jeremy Barton', 'Heather Moore']; // Your name here, as it appears in Teams
 
 var postsMemory = []; // Array to store posts with their replies
 var omittedRepliesCount = 0; // Counter for omitted replies
