@@ -1,57 +1,63 @@
-var userNames = ['Your Name']; // Array of usernames to track
+var userNames = ['Heather Moore', 'John Smith']; // Your names here, as they appear in Teams
 
 var postsMemory = []; // Array to store posts with their replies
 var omittedRepliesCount = 0; // Counter for omitted replies
 var omittedRepliesTimestamps = new Set(); // Set to keep track of omitted reply timestamps
+var allContentData = []; // Array to store content data for JSON export
 
 function countPosts(userNames) {
     const now = new Date();
     const monday = new Date(now);
-    monday.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1)); // Set to Monday
-    monday.setHours(0, 0, 0, 0); // Set Monday to 12:00 AM
+    monday.setDate(now.getDate() - now.getDay() + (now.getDay() === 0 ? -6 : 1));
+    monday.setHours(0, 0, 0, 0);
 
     const authorElements = document.querySelectorAll("span[id^='author-']");
-    let newPosts = 0;
-    let newReplies = 0;
-
+    let usersPostCounts = {}; // Track counts per user
+    
+    userNames.forEach(userName => {
+        usersPostCounts[userName] = {
+            posts: 0,
+            replies: 0,
+            omitted: 0
+        };
+    });
+    
     authorElements.forEach(function(element) {
-        const currentAuthorName = element.textContent.trim();
-
-        // Check if the current author's name is in the userNames array
-        if (userNames.includes(currentAuthorName)) {
+        const currentUserName = element.textContent.trim();
+        
+        if (userNames.includes(currentUserName)) {
             const authorId = element.getAttribute('id').replace('author-', '');
             const messageBodyElement = document.querySelector(`div[id="message-body-${authorId}"]`);
             
             if (messageBodyElement) {
                 const replyText = messageBodyElement.textContent.trim();
                 const wordCount = replyText.split(/\s+/).length;
-
                 const timeElement = element.closest('div').querySelector('time');
                 
                 if (timeElement) {
                     const timeText = timeElement.textContent.trim();
                     const postDate = parseRelativeTime(timeText, now);
-
+                    
                     if (postDate && postDate >= monday) {
-                        if (wordCount >= 10) { // Only include replies with more than 10 words
-                            // Check if this post or reply has already been added
+                        if (wordCount >= 10) { // Only include replies with more than two words
                             let existingPost = postsMemory.find(post => post.authorId === authorId && post.timestamp.getTime() === postDate.getTime());
-
+                            
                             if (!existingPost) {
                                 postsMemory.push({ timestamp: postDate, authorId: authorId, replies: [] });
-                                newPosts++;
+                                allContentData.push({ timestamp: postDate, authorId: authorId, content: replyText }); // Store content data
+                                usersPostCounts[currentUserName].posts++;
                             } else {
-                                // Check if this specific reply has already been added
                                 let existingReply = existingPost.replies.find(reply => reply.timestamp.getTime() === postDate.getTime());
                                 
                                 if (!existingReply) {
                                     existingPost.replies.push({ timestamp: postDate, authorId: authorId });
-                                    newReplies++;
+                                    allContentData.push({ timestamp: postDate, authorId: authorId, content: replyText }); // Store content data
+                                    usersPostCounts[currentUserName].replies++;
                                 }
                             }
                         } else {
-                            // Check if this omitted reply has been counted before
                             if (!omittedRepliesTimestamps.has(postDate.getTime())) {
+                                usersPostCounts[currentUserName].omitted++;
                                 omittedRepliesCount++;
                                 omittedRepliesTimestamps.add(postDate.getTime()); // Add to omitted timestamps
                             }
@@ -62,21 +68,22 @@ function countPosts(userNames) {
         }
     });
 
-    // Calculate the total posts and replies
-    const totalPosts = postsMemory.length;
-    const totalReplies = postsMemory.reduce((acc, post) => acc + post.replies.length, 0);
-    const totalPostsAndReplies = totalPosts + totalReplies;
+    // Display results for each user
+    userNames.forEach(userName => {
+        const totalPosts = usersPostCounts[userName].posts;
+        const totalReplies = usersPostCounts[userName].replies;
+        const totalPostsAndReplies = totalPosts + totalReplies;
 
-    // Update output to show combined total for all usernames
-    console.log(`${totalPostsAndReplies} post(s) or reply(s) found by users: ${userNames.join(", ")} since Monday, ${monday.toLocaleDateString()} at 12:00 AM.`);
-    console.log(`Omitted short replies: ${omittedRepliesCount}`);
+        console.log(`${totalPostsAndReplies} post(s) or reply(s) found by ${userName} since Monday, ${monday.toLocaleDateString()} at 12:00 AM.`);
+        console.log(`Omitted short replies for ${userName}: ${usersPostCounts[userName].omitted}`);
+    });
 
-    // Download the JSON data if there are new posts or replies
-    if (newPosts > 0 || newReplies > 0) {
-        downloadContentAsJson(postsMemory);
+    // If there is new content, trigger the JSON download
+    if (allContentData.length > 0) {
+        downloadContentAsJson(allContentData);
     }
 
-    if (totalPosts > 0) {
+    if (postsMemory.length > 0) {
         const allTimestamps = [];
         postsMemory.forEach(post => {
             allTimestamps.push(post.timestamp);
@@ -98,55 +105,7 @@ function countPosts(userNames) {
     }
 }
 
-function downloadContentAsJson(contentData) {
-    const blob = new Blob([JSON.stringify(contentData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `posts_replies_${new Date().toISOString().split('T')[0]}.json`; // Download with a meaningful name
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url); // Clean up
-}
-
-function parseRelativeTime(timeText, now) {
-    const parts = timeText.split(' ');
-    const date = new Date(now);
-    const daysOfWeek = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
-    if (timeText.includes('Yesterday')) {
-        date.setDate(date.getDate() - 1);
-    } else if (daysOfWeek.includes(parts[0])) {
-        const dayIndex = daysOfWeek.indexOf(parts[0]);
-        const currentDay = date.getDay();
-        let daysToSubtract = currentDay - dayIndex;
-        if (daysToSubtract <= 0) daysToSubtract += 7;
-        date.setDate(date.getDate() - daysToSubtract);
-    }
-
-    const timePart = parts[parts.length - 2] + ' ' + parts[parts.length - 1];
-    const [time, period] = timePart.split(' ');
-    let [hours, minutes] = time.split(':');
-    hours = parseInt(hours);
-    if (period === 'PM' && hours !== 12) hours += 12;
-    if (period === 'AM' && hours === 12) hours = 0;
-    date.setHours(hours, parseInt(minutes), 0, 0);
-
-    return date;
-}
-
-function formatTimestamp(date) {
-    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const dayName = days[date.getDay()];
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    const year = date.getFullYear();
-
-    return `${dayName}, ${month}/${day}/${year} ${hours}:${minutes}`;
-}
+// Rest of the functions remain unchanged ...
 
 // Auto run (default)
 function autoRunCountPosts(userNames) {
