@@ -3,6 +3,7 @@ var userName = 'Your Name'; // Your name here, as it appears in Teams
 var postsMemory = []; // Array to store posts with their replies
 var omittedRepliesCount = 0; // Counter for omitted replies
 var omittedRepliesTimestamps = new Set(); // Set to keep track of omitted reply timestamps
+var allContentData = []; // Array to store content data for JSON export
 
 function countPosts(userName) {
     const now = new Date();
@@ -36,6 +37,7 @@ function countPosts(userName) {
 
                             if (!existingPost) {
                                 postsMemory.push({ timestamp: postDate, authorId: authorId, replies: [] });
+                                allContentData.push({ timestamp: postDate, authorId: authorId, content: replyText }); // Store content data
                                 newPosts++;
                             } else {
                                 // Check if this specific reply has already been added
@@ -43,6 +45,7 @@ function countPosts(userName) {
                                 
                                 if (!existingReply) {
                                     existingPost.replies.push({ timestamp: postDate, authorId: authorId });
+                                    allContentData.push({ timestamp: postDate, authorId: authorId, content: replyText }); // Store content data
                                     newReplies++;
                                 }
                             }
@@ -68,6 +71,11 @@ function countPosts(userName) {
     console.log(`${totalPostsAndReplies} post(s) or reply(s) found by ${userName} since Monday, ${monday.toLocaleDateString()} at 12:00 AM.`);
     console.log(`Omitted short replies: ${omittedRepliesCount}`);
 
+    // If there is new content, trigger the JSON download
+    if (newPosts > 0 || newReplies > 0) {
+        downloadContentAsJson(allContentData);
+    }
+
     if (totalPosts > 0) {
         const allTimestamps = [];
         postsMemory.forEach(post => {
@@ -88,6 +96,18 @@ function countPosts(userName) {
         console.log(`(Nothing found yet)`);
         console.log(`Scroll around to find more posts.`);
     }
+}
+
+function downloadContentAsJson(contentData) {
+    const blob = new Blob([JSON.stringify(contentData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `posts_replies_${new Date().toISOString().split('T')[0]}.json`; // Download with a meaningful name
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url); // Clean up
 }
 
 function parseRelativeTime(timeText, now) {
@@ -141,4 +161,4 @@ function autoRunCountPosts(userName) {
 autoRunCountPosts(userName);
 
 // Comment out the line below if using auto-run
-// countPosts(userName); 
+// countPosts(userName);
