@@ -1,10 +1,11 @@
-var userNames = ['Heather Moore', 'John Smith']; // Your names here, as they appear in Teams
+var userNames = ['Your Name']; // Your names here, as they appear in Teams
 
 var postsMemory = []; // Array to store posts with their replies
 var omittedRepliesCount = 0; // Counter for omitted replies
 var omittedRepliesTimestamps = new Set(); // Set to keep track of omitted reply timestamps
 var allContentData = []; // Array to store content data for JSON export
 var countedPostsSet = new Set(); // Set to track unique post identifiers
+var downloadedContentHashes = new Set(); // Set to track already downloaded content
 
 function countPosts(userNames) {
     const now = new Date();
@@ -14,6 +15,7 @@ function countPosts(userNames) {
 
     const authorElements = document.querySelectorAll("span[id^='author-']");
     let usersPostCounts = {}; // Track counts per user
+    let newContentData = []; // Temporary array for new content only
     
     userNames.forEach(userName => {
         usersPostCounts[userName] = {
@@ -41,22 +43,34 @@ function countPosts(userNames) {
                     
                     if (postDate && postDate >= monday) {
                         const postIdentifier = `${authorId}-${postDate.getTime()}`; // Create unique identifier for post
+                        const contentHash = hashContent(authorId, postDate.getTime(), replyText);
 
                         if (wordCount >= 10) { // Only include replies with more than two words
                             if (!countedPostsSet.has(postIdentifier)) {
                                 countedPostsSet.add(postIdentifier); // Add to tracked identifiers
                                 postsMemory.push({ timestamp: postDate, authorId: authorId, replies: [] });
-                                allContentData.push({ timestamp: postDate, authorId: authorId, content: replyText }); // Store content data
+                                
+                                // Only add content if we haven't downloaded it before
+                                if (!downloadedContentHashes.has(contentHash)) {
+                                    newContentData.push({ timestamp: postDate, authorId: authorId, content: replyText });
+                                    downloadedContentHashes.add(contentHash);
+                                }
+                                
                                 usersPostCounts[currentUserName].posts++;
                             } else {
-                                // Check if this specific reply has already been added based on the associated post
                                 let existingPost = postsMemory.find(post => post.authorId === authorId && post.timestamp.getTime() === postDate.getTime());
                                 if (existingPost) {
                                     let existingReplyIdentifier = `${authorId}-${postDate.getTime()}`;
 
                                     if (!existingPost.replies.some(reply => `${reply.authorId}-${reply.timestamp.getTime()}` === existingReplyIdentifier)) {
                                         existingPost.replies.push({ timestamp: postDate, authorId: authorId });
-                                        allContentData.push({ timestamp: postDate, authorId: authorId, content: replyText }); // Store content data
+                                        
+                                        // Only add content if we haven't downloaded it before
+                                        if (!downloadedContentHashes.has(contentHash)) {
+                                            newContentData.push({ timestamp: postDate, authorId: authorId, content: replyText });
+                                            downloadedContentHashes.add(contentHash);
+                                        }
+                                        
                                         usersPostCounts[currentUserName].replies++;
                                     }
                                 }
@@ -65,7 +79,7 @@ function countPosts(userNames) {
                             if (!omittedRepliesTimestamps.has(postDate.getTime())) {
                                 usersPostCounts[currentUserName].omitted++;
                                 omittedRepliesCount++;
-                                omittedRepliesTimestamps.add(postDate.getTime()); // Add to omitted timestamps
+                                omittedRepliesTimestamps.add(postDate.getTime());
                             }
                         }
                     }
@@ -84,9 +98,10 @@ function countPosts(userNames) {
         console.log(`Omitted short replies for ${userName}: ${usersPostCounts[userName].omitted}`);
     });
 
-    // If there is new content, trigger the JSON download
-    if (allContentData.length > 0) {
-        downloadContentAsJson(allContentData);
+    // Only download if there is new content
+    if (newContentData.length > 0) {
+        allContentData = allContentData.concat(newContentData);
+        downloadContentAsJson(newContentData);
     }
 
     if (postsMemory.length > 0) {
@@ -111,16 +126,22 @@ function countPosts(userNames) {
     }
 }
 
+// New function to create a unique hash for content
+function hashContent(authorId, timestamp, content) {
+    return `${authorId}-${timestamp}-${content.slice(0, 50)}`; // Using first 50 chars of content for hash
+}
+
 function downloadContentAsJson(contentData) {
     const blob = new Blob([JSON.stringify(contentData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `posts_replies_${new Date().toISOString().split('T')[0]}.json`; // Download with a meaningful name
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    a.download = `new_posts_replies_${timestamp}.json`; // Download with timestamp
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    URL.revokeObjectURL(url); // Clean up
+    URL.revokeObjectURL(url);
 }
 
 function parseRelativeTime(timeText, now) {
