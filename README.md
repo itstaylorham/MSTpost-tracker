@@ -1,6 +1,6 @@
 # MSTpost Tracker
 
-A quick tool to display post information by specific user(s) in Microsoft Teams.
+A quick tool to display post information and generate visualizations.
 
 ## Quickstart
 In order to run the process you will need to be in a web browser console. 
