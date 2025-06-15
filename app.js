@@ -101,7 +101,7 @@ function countPosts(userNames) {
     // Only download if there is new content
     if (newContentData.length > 0) {
         allContentData = allContentData.concat(newContentData);
-        downloadContentAsJson(newContentData);
+      //  downloadContentAsJson(newContentData);
     }
 
     if (postsMemory.length > 0) {
